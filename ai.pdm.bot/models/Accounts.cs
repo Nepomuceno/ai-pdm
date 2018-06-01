@@ -24,6 +24,8 @@ namespace ai.pdm.bot.models
             var result = _accounts.Where(a => a.PDMContacts == name || a.PTS.TEContacts == name).ToList();
             return result;
         }
+
+
     }
 
     public class Account
@@ -32,6 +34,7 @@ namespace ai.pdm.bot.models
         public string Id { get; set; }
         [JsonProperty(PropertyName = "Modified On")]
         public string ModifiedOn { get; set; }
+        [JsonProperty(PropertyName = "Account Name")]
         public string AccountName { get; set; }
         [JsonProperty(PropertyName = "OCP CRM ID")]
         public string OCPCRMID { get; set; }

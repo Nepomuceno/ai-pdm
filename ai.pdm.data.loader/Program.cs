@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.Serialization;
@@ -59,9 +60,38 @@ namespace ai.pdm.data.loader
 
         static async Task Main(string[] args)
         {
-            TokenResponse tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(await GetToken());
-            _accessToken = tokenResponse.access_token;
-            await DoWork();
+            HttpClientHandler handler = new HttpClientHandler()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            };
+            HttpClient client = new HttpClient(handler);
+            client.DefaultRequestHeaders.Add("Origin", "https://cecustomers.microsoftonline.com");
+            client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+            //client.DefaultRequestHeaders.Add("Content-Type", "application/json");
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            client.DefaultRequestHeaders.Add("api-key", "DE8FC7CD7E9C6B38C58F57B94D2CFF14");
+            /*
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetAdvisorData/msCustomerGuid/fdbcabce-d545-44b4-b143-706264f6bc1f?_=1527850278066
+             * https://cecustomersapi.trafficmanager.net/customerapi/GetACRDetails/msCustomerGuid/fdbcabce-d545-44b4-b143-706264f6bc1f?_=1527850278065
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetSearchIndexProfileInformation?_=1527850278058
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetRevenueSummaries/customerId/fdbcabce-d545-44b4-b143-706264f6bc1f?_=1527850278068
+             * https://aiportal.search.windows.net/indexes/customerprofile20180601000228/docs?api-version=2016-09-01&searchMode=all&%24select=MSCustomerGUID%2COrganizationName%2CTPID%2CCity%2CCountry%2CIsEA%2CIsDirect%2CWebsite%2CIsManagedAccount%2CNumberOfSubscriptions%2CTopXRank%2CCrmAccountId%2CDUNSNumber%2CClassification%2CTotalAzureRevenue%2CSegmentName%2CVerticalCategoryName%2CIndustryName%2CIsAHUB%2CEnrollmentNumber%2CSubsidiaryId%2CTPIDList%2CCXPScore%2CConsumptionRiskScore&%24top=1&%24orderby=IsEA%20desc%2CNumberOfSubscriptions%20desc%2CTopXRank%2COrganizationName&%24filter=MSCustomerGUID%20eq%20%27fdbcabce-d545-44b4-b143-706264f6bc1f%27&_=1527850278063
+             * https://aiportal.search.windows.net/indexes/salesblockerv1/docs?api-version=2016-09-01&searchMode=all&%24top=10&search=Axel%20Springer%20SE%2051831483%20axelspringer%20%2B%20Azure%20%7C%20Axel%20Springer%20SE%2051831483%20axelspringer&_=1527850278072
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetCustomerLifetime/customerId/fdbcabce-d545-44b4-b143-706264f6bc1f/lifetimetype/1/granularity/30/start/2015-06-01/end/2018-06-01?_=1527850278082
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetCustomerSubscriptionSummary/customerId/fdbcabce-d545-44b4-b143-706264f6bc1f?_=1527850593085
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetCustomerLifetime/customerId/fdbcabce-d545-44b4-b143-706264f6bc1f/lifetimetype/2/granularity/30/start/2015-06-01/end/2018-06-01?_=1527850593088
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetComputeUsage/customerId/fdbcabce-d545-44b4-b143-706264f6bc1f/granularity/Daily/start/2018-05-02/end/2018-06-01?_=1527850593091
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetModelDetails/customerId/fdbcabce-d545-44b4-b143-706264f6bc1f/start/2018-05-01/end/2018-06-01?_=1527850593102
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetCloudCustomers/msCustomerGuid/fdbcabce-d545-44b4-b143-706264f6bc1f/startDate/2015-06-01?_=1527850593105
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetRankOfCustomer/IdentifierType/MSCustomer/identifierValue/fdbcabce-d545-44b4-b143-706264f6bc1f/startDate/2015-06-01/endDate/2018-06-01?_=1527850593111
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetServiceStartDate/customerId/fdbcabce-d545-44b4-b143-706264f6bc1f?_=1527850593112
+             * https://cecustomersapi.trafficmanager.net/dashboardapi/GetStaticMappings?_=1527850593060
+            client.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6ImlCakwxUmNxemhpeTRmcHhJeGRacW9oTTJZayIsImtpZCI6ImlCakwxUmNxemhpeTRmcHhJeGRacW9oTTJZayJ9.eyJhdWQiOiJodHRwczovL21zaXRhYWQub25taWNyb3NvZnQuY29tL2dyYWJwb3J0YWxhcGkiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC83MmY5ODhiZi04NmYxLTQxYWYtOTFhYi0yZDdjZDAxMWRiNDcvIiwiaWF0IjoxNTI3ODQ0NzY0LCJuYmYiOjE1Mjc4NDQ3NjQsImV4cCI6MTUyNzg0ODY2NCwiYWNyIjoiMSIsImFpbyI6IkFVUUF1LzhIQUFBQS9PNU5kZEl2VWJ3QzhraHB4UFFXYTRLQStQd0lTNTFnTU44c1AwMDFzTVB6OFV4aFRNcjFtaEVJZ0Q2RVZ6TW1rNWxsQzFocTIvMThhNVlWRU4xNDFRPT0iLCJhbXIiOlsicHdkIiwibWZhIl0sImFwcGlkIjoiZTUzMDRhNzktNDk3MC00YzM2LWI2MTEtZjdhYTU2Y2Y1OWNkIiwiYXBwaWRhY3IiOiIxIiwiZV9leHAiOjI2MjgwMCwiZmFtaWx5X25hbWUiOiJOZXBvbXVjZW5vIiwiZ2l2ZW5fbmFtZSI6IkdhYnJpZWwiLCJpcGFkZHIiOiI4Ni4xNTcuMjEzLjIxMiIsIm5hbWUiOiJHYWJyaWVsIE5lcG9tdWNlbm8iLCJvaWQiOiJkOThmZWIxNi0zZTM0LTQxMzctYThjOC03OWQ4ODM2MDllMDYiLCJvbnByZW1fc2lkIjoiUy0xLTUtMjEtMTcyMTI1NDc2My00NjI2OTU4MDYtMTUzODg4MjI4MS0zOTY2NDM1Iiwic2NwIjoidXNlcl9pbXBlcnNvbmF0aW9uIiwic3ViIjoiem9BVHA2d2MxUFhWMW5pMGZVeWpSN0JvVU9fS0RiTnZ4cHlGZVkweG8wayIsInRpZCI6IjcyZjk4OGJmLTg2ZjEtNDFhZi05MWFiLTJkN2NkMDExZGI0NyIsInVuaXF1ZV9uYW1lIjoiZ2FuZXBvbXVAbWljcm9zb2Z0LmNvbSIsInVwbiI6ImdhbmVwb211QG1pY3Jvc29mdC5jb20iLCJ1dGkiOiJIZ1RZaC1LaktrR3dqQXVhV1M4R0FBIiwidmVyIjoiMS4wIn0.DNmHICfjDtivSKoBA8AAezCIqUx570fBMoVSRkLJrZuyz52Een7fTGJERfzIUx9YLP6o26B0zsLyoUkXku4848LKmpTyX8_13Cn_Bnpr5VFGuWuBq1P4Lpa0FDF-t8I4Vhx4NE8HWEzhhJE7lIqWe3uMjvrxtUfvAu0e6flrApGhlohCJzzT7cqdBMYn15guFgU36pYhu1gtHgFphVuLRZLOnOxHtfZgKhExeC7vmsoz5vrq637ILz-QdBaBwCM5m7bfVnujfYMmucQH8AKtElyotRoKk_EViS0MNnaHMiMBBEY_XTOEC1Aafl-91uY8PLG3G9Uxm3QwZQevvcYDqA");
+            var responde = await client.GetStringAsync("https://cecustomersapi.trafficmanager.net/dashboardapi/GetSearchIndexProfileInformation?_=1527842121747");
+            responde = await client.GetStringAsync("https://aiportal.search.windows.net/indexes/customerprofile20180601000228/docs?api-version=2016-09-01&searchMode=all&search=Gui*&searchFields=MSCustomerGUID%2COrganizationName%2CEnrollmentNumber%2CTPID%2CCloudCustomerIds%2CSubscriptionIds%2CBillableAccountNumber%2CTPNames%2CPreferredAnsiExternalNames%2CPCNs%2COrgNames%2CTPIDList&highlight=MSCustomerGUID%2COrganizationName&%24select=MSCustomerGUID%2COrganizationName%2CCity%2CCountry%2CTPID%2CIsEA%2CIsDirect%2CWebsite%2CIsManagedAccount%2CNumberOfSubscriptions%2CTopXRank%2CClassification%2CTotalAzureRevenue%2CSegmentName%2CVerticalCategoryName%2CIndustryName%2CIsAHUB%2CSubsidiaryId%2CTPIDList%2CCXPScore%2CConsumptionRiskScore&%24top=15&%24orderby=IsEA%20desc%2CNumberOfSubscriptions%20desc%2CTopXRank%2COrganizationName&_=1527845067368");
+            //TokenResponse tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(await GetToken());
+            //_accessToken = tokenResponse.access_token;
+            //await DoWork();
         }
 
         private static async Task<string> GetToken()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ai.pdm.bot.models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,7 +10,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
+
 using Microsoft.Bot.Builder.BotFramework;
+using Microsoft.Bot.Builder.Core.Extensions;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +36,15 @@ namespace ai.pdm.bot
             services.AddSingleton<IAccountsRepository>(new AccountsRepository());
             services.AddBot<EchoBot>(options =>
             {
+                var middleware = options.Middleware;
+
+                //                middleware.Add(new UserState<UserData>(new MemoryStorage()));
+                //                middleware.Add(new ConversationState<ConversationData>(new MemoryStorage()));
+                middleware.Add(new RegExpRecognizerMiddleware()
+                                .AddIntent("mystarts", new Regex("starts|top", RegexOptions.IgnoreCase))
+                                .AddIntent("howtohelp", new Regex("help (?<partner>.*)", RegexOptions.IgnoreCase))
+                                .AddIntent("myworries", new Regex("worried|worry|worries", RegexOptions.IgnoreCase))
+                                .AddIntent("mypartners", new Regex("partners", RegexOptions.IgnoreCase)));
                 options.CredentialProvider = new ConfigurationCredentialProvider(Configuration);
                 options.EnableProactiveMessages = true;
                 options.ConnectorClientRetryPolicy = new RetryPolicy(

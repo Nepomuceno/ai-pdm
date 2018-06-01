@@ -20,7 +20,9 @@ namespace ai.pdm.bot
         }
         public async Task OnTurn(ITurnContext context)
         {
-            var accounts = _account.MyAccounts(context.Activity.From.Name);
+            var pdmcontext = new AIPDMContext(context);
+
+
             switch (context.Activity.Type)
             {
                 // Note: This Sample is soon to be deleted. I've added in some easy testing here
@@ -28,7 +30,16 @@ namespace ai.pdm.bot
                 // near future
 
                 case ActivityTypes.Message:
-                    await context.SendActivity($"You sent '{context.Activity.Text}'");
+                    switch (pdmcontext.RecognizedIntents.TopIntent?.Name)
+                    {
+                        case "mypartners":
+                            var myaccounts = _account.MyAccounts(context.Activity.From.Name);
+                            await context.SendActivity($"Your partners are: {string.Join(" , ", myaccounts.Select(a => a.AccountName))}");
+                            break;
+                        default:
+                            break;
+                    }
+                    /*await context.SendActivity($"You sent '{context.Activity.Text}'");
                     if (context.Activity.Text.ToLower() == "getmembers")
                     {
                         BotFrameworkAdapter b = (BotFrameworkAdapter)context.Adapter;
@@ -71,6 +82,7 @@ namespace ai.pdm.bot
                             await context.SendActivity($"Conversation Id: {m.Id} Member Count: {m.Members.Count}");
                         }
                     }
+                    */
 
                     break;
                 case ActivityTypes.ConversationUpdate:
