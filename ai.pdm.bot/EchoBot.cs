@@ -1,4 +1,5 @@
-﻿using ai.pdm.bot.models;
+﻿using AdaptiveCards;
+using ai.pdm.bot.models;
 using Microsoft.Bot;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Adapters;
@@ -6,6 +7,7 @@ using Microsoft.Bot.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace ai.pdm.bot
@@ -21,7 +23,7 @@ namespace ai.pdm.bot
         public async Task OnTurn(ITurnContext context)
         {
             var pdmcontext = new AIPDMContext(context);
-
+            IMessageActivity activity = context.Activity.CreateReply();
 
             switch (context.Activity.Type)
             {
@@ -33,10 +35,38 @@ namespace ai.pdm.bot
                     switch (pdmcontext.RecognizedIntents.TopIntent?.Name)
                     {
                         case "mypartners":
-                            var myaccounts = _account.MyAccounts(context.Activity.From.Name);
-                            await context.SendActivity($"Your partners are: {string.Join(" , ", myaccounts.Select(a => a.AccountName))}");
+                            var myaccounts = await _account.MyAccounts(context.Activity.From.Name);
+                            var card = new AdaptiveCard();
+                            card.Body = new List<CardElement>();
+                            card.Body.Add(new TextBlock()
+                            {
+                                Text = "Your partners are"
+                            });
+                            card.Body.AddRange(myaccounts.Select(s => new TextBlock()
+                            {
+                                Size = TextSize.Normal,
+                                Color = s.SearchAccount?.ConsumptionRiskScore > 0.3 ? s.SearchAccount?.ConsumptionRiskScore > 0.6 ? TextColor.Warning : TextColor.Attention : TextColor.Default,
+                                Text = s.Account?.name
+                            }));
+                            activity.Attachments.Add(new Attachment(AdaptiveCard.ContentType, content: card));
+                            card.Actions.Add(new SubmitAction() { Title = "partner", DataJson = "{ Action:'Submit' }" });
+                            await context.SendActivity(activity);
+                            break;
+
+                        case "mystarts":
+
+                            var mystarts = await _account.MyAccounts(context.Activity.From.Name);
+                            var realstars = mystarts.OrderByDescending(x => x.SearchAccount?.TopXRank).Take(5);
+                            StringBuilder sb = new StringBuilder();
+                            foreach (var star in realstars)
+                            {
+                                sb.AppendLine($"# {star.Account?.name}  / ${star.SearchAccount?.TopXRank} / {star.SearchAccount?.ConsumptionRiskScore.ToString("p")} / {star.SearchAccount?.Classification} \r\n");
+                            }
+                            await context.SendActivity($"# Your stars are:\r\n {sb}");
+
                             break;
                         default:
+                            await context.SendActivity($"Sorry I couldn't understand you but I am learning every day!");
                             break;
                     }
                     /*await context.SendActivity($"You sent '{context.Activity.Text}'");
