@@ -1,0 +1,53 @@
+{
+    "$schema": "https://statics.teams.microsoft.com/sdk/v1.0/manifest/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.0",
+    "id": "5d645062-2ba1-4638-9041-c91f710a713d",
+    "version": "0.1.0",
+    "name": {
+        "full": "Ai Pdm",
+        "short": "AiPdm"
+    },
+    "description": {
+        "full": "The Ai Pdm bot",
+        "short": "Ai pdm bot"
+    },
+    "packageName": "ai-pdm",
+    "developer": {
+        "name": "Gabriel Nepomuceno",
+        "websiteUrl": "https://github.com/Nepomuceno/ai-pdm",
+        "privacyUrl": "https://github.com/Nepomuceno/ai-pdm",
+        "termsOfUseUrl": "https://github.com/Nepomuceno/ai-pdm"
+    },
+    "icons": {
+        "color": "emotions.png",
+        "outline": "emotions_outline.png"
+    },
+    "accentColor": "#FFFFFF",
+    "bots": [
+        {
+            "botId": "0129f02a-c311-4e57-9a8e-db8720ad17d4",
+            "commandLists": [
+                {
+                    "commands": [
+                        {
+                            "title": "partner {partnerName}",
+                            "description": "Get info about that partner"
+                        },
+                        {
+                            "title": "my attention",
+                            "description": "give you partners that need your attention"
+                        }
+                    ],
+                    "scopes": [
+                        "personal",
+                        "team"
+                    ]
+                }
+            ],
+            "scopes": [
+                "personal",
+                "team"
+            ]
+        }
+    ]
+}
